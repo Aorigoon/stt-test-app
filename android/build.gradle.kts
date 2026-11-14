@@ -15,9 +15,6 @@ subprojects {
     val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
     project.layout.buildDirectory.value(newSubprojectBuildDir)
 }
-subprojects {
-    project.evaluationDependsOn(":app")
-}
 
 // onnxruntime_plus 1.5.0 hardcodes compileSdkVersion 33 in its
 // android/build.gradle, but its transitive androidx dependencies
@@ -27,23 +24,42 @@ subprojects {
 // Reflection is used deliberately: AGP classes are not on this root
 // script's classpath, so a typed LibraryExtension reference would fail
 // script compilation.
-subprojects {
-    afterEvaluate {
-        val androidExt = extensions.findByName("android") ?: return@afterEvaluate
-        val setter =
-            androidExt.javaClass.methods.firstOrNull {
-                it.name == "setCompileSdk" && it.parameterCount == 1
-            }
-                ?: androidExt.javaClass.methods.firstOrNull {
-                    it.name == "setCompileSdkVersion" && it.parameterCount == 1
-                }
-        if (setter != null) {
-            setter.invoke(androidExt, 36)
-            println("stt-test-app: forced compileSdk 36 on ${project.path}")
-        } else {
-            println("stt-test-app: WARNING could not find compileSdk setter on ${project.path}")
+//
+// ORDERING MATTERS: this block must stay ABOVE the
+// evaluationDependsOn(":app") block below. That block forces :app to
+// evaluate during root-script evaluation, and afterEvaluate cannot be
+// registered on an already-evaluated project ("Cannot run
+// Project.afterEvaluate(Action) when the project is already evaluated").
+// Registering the hook first also guarantees it runs before AGP's own
+// afterEvaluate callbacks, so variants are created with compileSdk 36.
+fun Project.forceCompileSdk36() {
+    val androidExt = extensions.findByName("android") ?: return
+    val setter =
+        androidExt.javaClass.methods.firstOrNull {
+            it.name == "setCompileSdk" && it.parameterCount == 1
         }
+            ?: androidExt.javaClass.methods.firstOrNull {
+                it.name == "setCompileSdkVersion" && it.parameterCount == 1
+            }
+    if (setter != null) {
+        setter.invoke(androidExt, 36)
+        println("stt-test-app: forced compileSdk 36 on ${project.path}")
+    } else {
+        println("stt-test-app: WARNING could not find compileSdk setter on ${project.path}")
     }
+}
+
+subprojects {
+    try {
+        afterEvaluate { forceCompileSdk36() }
+    } catch (e: IllegalStateException) {
+        // Already evaluated (should not happen with the ordering above):
+        // apply directly instead of failing configuration.
+        forceCompileSdk36()
+    }
+}
+subprojects {
+    project.evaluationDependsOn(":app")
 }
 
 tasks.register<Delete>("clean") {
