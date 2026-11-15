@@ -5,7 +5,8 @@
 //     the greedy loop re-feeds the last token from its saved PRE-token state
 //     (deterministic recompute, same as the Python loop).
 //   - 1 intra-op thread (fastest in the VM benchmark), graph opt level all.
-//   - lang_ids is always 0 (English): the export baked in the English adapter.
+//   - lang_ids is always 0 (English) in this test app; the export itself
+//     switches adapters per lang id (v1.0.1's export baked in English only).
 
 import 'dart:math' as math;
 import 'dart:typed_data';

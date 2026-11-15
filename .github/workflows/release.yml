@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Release version (e.g. 1.0.1)'
+        description: 'Release version (e.g. 1.0.2)'
         required: true
-        default: '1.0.1'
+        default: '1.0.2'
 
 permissions:
   contents: write
@@ -49,6 +49,7 @@ jobs:
             --target-platform android-arm64 \
             --build-name=${{ github.event.inputs.version }} \
             --build-number=${{ github.run_number }} \
+            --dart-define=APP_VERSION=${{ github.event.inputs.version }} \
             --obfuscate \
             --split-debug-info=build/app/outputs/symbols
         env:
@@ -70,10 +71,12 @@ jobs:
           body: |
             ## STT Test v${{ github.event.inputs.version }}
 
-            Test build of the from-scratch multilingual streaming STT model (s1 checkpoint, 11 epochs, int8 ONNX).
+            Test build of the from-scratch multilingual streaming STT model (v0 final, 35 epochs, int8 ONNX).
 
-            - Release-signed build (uninstall the v1.0.0 debug APK first — different signature)
-            - Fixed: model now loads on ARM phones (int8 re-quantized MatMul-only, no ConvInteger)
+            - Final v0 model: 35/35 epochs, val WER 0.53 (en 0.45, es 0.36)
+            - Fixed: encoder adapter bug — lang_ids now switches adapters at runtime (was English-only)
+            - Fixed: Copy Result now shows the real app version
+            - Release-signed build (installs over v1.0.1; uninstall the v1.0.0 debug APK first — different signature)
             - English only for now (test build)
             - Mic recording + 3 bundled samples
             - Shows transcript, latency ms, RTF — Copy Result button included

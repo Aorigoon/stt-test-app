@@ -1,7 +1,8 @@
-// STT Test — minimal on-device test app for the s1 STT ONNX model.
+// STT Test — minimal on-device test app for the final v0 STT ONNX model.
 // Measures REAL latency / RTF on the phone. Test tool, not a product.
-// Text buttons only (no icons). English-only transcription in v1:
-// the exported encoder baked in the English adapter (see README.md).
+// Text buttons only (no icons). English-only transcription for now
+// (the app always passes lang_ids=[0]; the export itself is fixed and
+// switches adapters per lang id — see README.md).
 
 import 'dart:async';
 import 'dart:io';
@@ -14,8 +15,12 @@ import 'package:record/record.dart';
 import 'stt_engine.dart';
 import 'wav_io.dart';
 
-const String appVersion = '1.0.0';
-const String modelVersion = 's1 (11.5 epochs, int8 ONNX)';
+// Release workflow passes --dart-define=APP_VERSION=<version>, so the
+// displayed version always matches the dispatched release (never drifts
+// like the old hardcoded '1.0.0' did). Local builds use the default.
+const String appVersion =
+    String.fromEnvironment('APP_VERSION', defaultValue: '1.0.2');
+const String modelVersion = 'v0 final (35 epochs, int8 ONNX)';
 
 class SampleClip {
   final String asset;

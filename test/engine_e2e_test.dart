@@ -1,17 +1,15 @@
 // End-to-end decode test: loads the fp32 ONNX models via the app's
 // SttEngine and transcribes sample1.wav. The expected transcript comes from
-// the Python fp32 reference (eval_s1/RESULTS.md).
+// the Python reference for the v0 final checkpoint
+// (eval_s1/onnx/s4/samples_s4.json).
 //
-// Why fp32: the Linux ORT 1.15.1 .so bundled with onnxruntime_plus cannot
-// run the int8 model ("no implementation for ConvInteger"). The Android
-// ORT 1.22.0 .so DOES contain the ConvInteger kernel (verified: the
-// arm64-v8a libonnxruntime.so exports onnxruntime::ConvInteger::Compute),
-// and Python ORT 1.31.1 runs the int8 model fine — so this is a Linux
-// test-env limitation only. The fp32 run still verifies the whole Dart
-// decode path (encode + greedy loop + tokenizer) end to end.
+// Why fp32: the test predates the MatMul-only int8 quantization (the
+// shipped int8 model has no ConvInteger nodes, so it loads on ARM phones).
+// The fp32 run still verifies the whole Dart decode path (encode + greedy
+// loop + tokenizer) end to end.
 //
 // Run with the fp32 model dir (skipped if unset):
-//   STT_FP32_DIR=$HOME/workspace/stt-project/eval_s1/onnx \
+//   STT_FP32_DIR=$HOME/workspace/stt-project/eval_s1/onnx/s4 \
 //   LD_LIBRARY_PATH=$HOME/.pub-cache/hosted/pub.dev/onnxruntime_plus-1.5.0/linux \
 //   flutter test test/engine_e2e_test.dart
 // (CI does NOT run this test — the debug APK build is the CI gate.)
@@ -51,10 +49,10 @@ void main() {
         'RTF: ${result.rtf.toStringAsFixed(2)}, '
         'load: ${result.modelLoadMs.toStringAsFixed(0)} ms');
     // ignore: avoid_print
-    print('copy text:\n${result.toCopyText('1.0.0', 's1 test')}');
+    print('copy text:\n${result.toCopyText('1.0.2', 'v0 final test')}');
 
-    // Python fp32 reference for this clip (eval_s1/RESULTS.md).
-    expect(result.transcript, 'stuping out of his highing place');
+    // Python reference for this clip (eval_s1/onnx/s4/samples_s4.json).
+    expect(result.transcript, 'stuping out of his heiding place');
     expect(result.latencyMs, greaterThan(0));
     expect(result.rtf, greaterThan(0));
     engine.dispose();
