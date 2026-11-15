@@ -40,7 +40,11 @@ mic recording, big readable numbers, and a COPY RESULT button.
 
 ## Build
 
+The 43 MB encoder is stored split (GitHub's API rejects single files above
+~35 MB); reassemble it once after cloning:
+
 ```sh
+bash tools/reassemble_models.sh
 flutter pub get
 flutter analyze
 flutter test        # mel + tokenizer tests; e2e test skips without STT_FP32_DIR
